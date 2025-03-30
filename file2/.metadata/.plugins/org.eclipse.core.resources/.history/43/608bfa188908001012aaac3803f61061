@@ -1,0 +1,82 @@
+const express = require('express');
+const app = express();
+
+app.get('/', (req, res) => {
+    res.send('Express 工作正常');
+});
+
+app.listen(3000, () => {
+    console.log('服务器运行在 http://localhost:3000');
+});
+
+// 获取所有商家
+app.get('/api/businesses', async (req, res) => {
+    try {
+        const [rows] = await db.execute('SELECT * FROM businesses');
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 添加商家
+app.post('/api/businesses', async (req, res) => {
+    const { name, address, phone } = req.body;
+    try {
+        const [result] = await db.execute(
+            'INSERT INTO businesses (name, address, phone) VALUES (?, ?, ?)',
+            [name, address, phone]
+        );
+        res.status(201).json({ id: result.insertId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// 获取某个商家的菜单
+app.get('/api/menu/:businessId', async (req, res) => {
+    const { businessId } = req.params;
+    try {
+        const [rows] = await db.execute('SELECT * FROM menu_items WHERE business_id = ?', [businessId]);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 添加菜单项
+app.post('/api/menu', async (req, res) => {
+    const { businessId, name, description, price, imageUrl } = req.body;
+    try {
+        const [result] = await db.execute(
+            'INSERT INTO menu_items (business_id, name, description, price, image_url) VALUES (?, ?, ?, ?, ?)',
+            [businessId, name, description, price, imageUrl]
+        );
+        res.status(201).json({ id: result.insertId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+// 创建订单
+app.post('/api/order', async (req, res) => {
+    const { businessId, customerName, totalPrice } = req.body;
+    try {
+        const [result] = await db.execute(
+            'INSERT INTO orders (business_id, customer_name, total_price) VALUES (?, ?, ?)',
+            [businessId, customerName, totalPrice]
+        );
+        res.status(201).json({ orderId: result.insertId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// 获取某个商家的所有订单
+app.get('/api/orders/:businessId', async (req, res) => {
+    const { businessId } = req.params;
+    try {
+        const [rows] = await db.execute('SELECT * FROM orders WHERE business_id = ?', [businessId]);
+        res.json(rows);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
